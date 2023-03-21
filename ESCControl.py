@@ -11,6 +11,8 @@ ESC = AngularServo(13, min_angle=0, max_angle=100, min_pulse_width=1/1000, max_p
 ESC.angle=100 # start at full throttle
 # TODO turn on the ESC here using the power button spliced into GPIO
 sleep(2.2) # hold full throttle for two seconds (slight extra time for button)
+# NOTE not sure if should go all the way down or to 50 - if we should have reverse throttle?
+# should we say goes from -100 to +100? idek
 ESC.angle=0 # throttle down. should now be calibrated
 sleep(0.5) # wait a moment before anything else
 
