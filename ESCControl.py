@@ -97,20 +97,32 @@ def cycleThrottle():
 		print("Throttle:", setESC, "/", FULL_THROTTLE)
 		ESC.angle= setESC
 		sleep(1) # wait a second
-	sleep(2) # wait before repeating the sequence
+	setESC=0
+	print("Throttle:", setESC,"/", FULL_THROTTLE)
+	ESC.angle = setESC
 	
 
-try:
-	normalESCStartup()
-	cycleThrottle()
+def setThrottle(throttle):
+	ESC.angle = throttle
+	print("Throttle:", throttle, "/", FULL_THROTTLE)
 
 
-except KeyboardInterrupt: # If CTRL+C is pressed, exit cleanly:
-   print("Keyboard interrupt")
+
+# if this isn't being called from another program
+if __name__ == '__main__':
+	try:
+		normalESCStartup()
+		cycleThrottle()
+		setThrottle(5)
+		sleep(5)
+
+
+	except KeyboardInterrupt: # If CTRL+C is pressed, exit cleanly:
+		print("Keyboard interrupt")
 
 # except:
 #    print("some error")  # commented out so that I find runtime python errors
 
-finally:
-   print("clean up") 
-   GPIO.cleanup() # cleanup all GPIO 
+	finally:
+		print("clean up") 
+		GPIO.cleanup() # cleanup all GPIO 
