@@ -35,40 +35,67 @@ GPIO.setmode(GPIO.BCM)
 from gpiozero.pins.pigpio import PiGPIOFactory
 factory=PiGPIOFactory()
 
+# set rpi 4b pins to be plugged in
+ESC_POWER_PIN = 23
+ESC_PWM_PIN = 13
+
+# define params that will be needed
+NO_THROTTLE = 0
+FULL_THROTTLE = 100
+MIN_MOV_THROTTLE = 7
+
+
+
+# control the ESC through PWM by treating it as a servo
+# currently doesn't work until set to angle 7/100
+ESC = AngularServo(ESC_PWM_PIN, min_angle= NO_THROTTLE, max_angle=FULL_THROTTLE, min_pulse_width=1/1000, max_pulse_width=2/1000, pin_factory=factory)
+
+# initialize the GPIO pin to switch on/off the ESC
+GPIO.setup(ESC_POWER_PIN, GPIO.OUT)
+GPIO.output(ESC_POWER_PIN, 0) # start with the pin off
+
+
+# initialize the ESC by running the calibration routine:
+# NOTE not sure if should go all the way down or to 50 - if we should have reverse throttle?
+# should we say goes from -100 to +100? idek
+def calibrateESC():
+	print("calibrating:")
+	ESC.angle=FULL_THROTTLE # start at full throttle
+	GPIO.output(23, 1) # turn on the ESC
+	print("setting max throttle")
+	sleep(2) # hold full throttle for two seconds 
+	ESC.angle=NO_THROTTLE # throttle down. 
+	print("setting neutral throttle ")
+	sleep(2) # wait a moment before anything else
+	print("ESC should be calibrated")
+
+
+def cycleThrottle():
+	print("no throttle")
+	ESC.angle=0 # throttle off
+	sleep(2)
+	print("min throttle that moves")
+	ESC.angle=MIN_MOV_THROTTLE
+	sleep(2)
+	print("cycling through some throttle values")
+	for i in range (3):
+		setESC = i + MIN_MOV_THROTTLE
+		print("Throttle:", setESC, "/", FULL_THROTTLE)
+		ESC.angle= setESC
+		sleep(1) # wait a second
+	sleep(2) # wait before repeating the sequence
+	
+
 try:
-    # control the ESC through PWM by treating it as a servp
-    # TODO try playing around with the pulse widths to see if can make ESC work at pulse width of 1. 
-    # currently doesn't work until set to angle of 10
-    # NOTE do we necessarily want AngularServo? Unsure. Want to be able to spin motor in reverse
-    ESC = AngularServo(13, min_angle=0, max_angle=100, min_pulse_width=1/1000, max_pulse_width=2/1000, pin_factory=factory)
+	calibrateESC()
+	cycleThrottle()
 
-    # initialize the GPIO pin to switch on/off the ESC
-    GPIO.setup(23, GPIO.OUT)
-    GPIO.output(23, 0) # start with the pin off
-
-    # initialize the ESC by running the calibration routine:
-    ESC.angle=100 # start at full throttle
-    GPIO.output(23, 1) # turn on the ESC
-    sleep(2) # hold full throttle for two seconds 
-    # NOTE not sure if should go all the way down or to 50 - if we should have reverse throttle?
-    # should we say goes from -100 to +100? idek
-    ESC.angle=0 # throttle down. should now be calibrated
-    sleep(1) # wait a moment before anything else
-
-    # loop infinitley ramping up throttle
-    while (True):
-        ESC.angle=0 # throttle off
-        for i in range (15):
-            ESC.angle=i
-            print(i)
-            sleep(0.5) # wait a half second
-        sleep(1) # wait a full second before repeating the sequence
 
 except KeyboardInterrupt: # If CTRL+C is pressed, exit cleanly:
    print("Keyboard interrupt")
 
-except:
-   print("some error") 
+# except:
+#    print("some error")  # commented out so that I find runtime python errors
 
 finally:
    print("clean up") 
