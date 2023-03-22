@@ -81,10 +81,16 @@ def escCalibrate():
 	sleep(1) # wait a second
 	print("setting neutral throttle ")
 	setThrottle(50) # TODO figure out if this should be 50 or 0
-	sleep(4) # hold neutral throttle for two seconds
+	sleep(2) # hold neutral throttle for two seconds
 	print("should hear long beep")
-	sleep(1) # wait a second
 	print("ESC should be calibrated")
+	print("normal startup noises:")
+	sleep(2)
+	print("first beeps: 3 for 3 cell battery, 4 for 4 cell")
+	sleep(2)
+	print("second beeps: 1 for brake on, 2 for brake off")
+	sleep(2)
+	print("ESC startup done")
 
 
 def escStart():
