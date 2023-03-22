@@ -35,21 +35,22 @@ GPIO.setmode(GPIO.BCM)
 from gpiozero.pins.pigpio import PiGPIOFactory
 factory=PiGPIOFactory()
 
-# set rpi 4b pins to be plugged in
+# set RPi 4b pins to be plugged in
 ESC_POWER_PIN = 23
 ESC_PWM_PIN = 13
 
-# define params that will be needed
+# define throttle parameters
 FULL_REV_THROTTLE = -100
 NEUTRAL_THROTTLE = 0
 FULL_FWD_THROTTLE = 100
-# TODO figure out throttle deadzones
-# FWD_THROTTLE_DEADZONE = ?
-# REV_THROTTLE_DEADZONE = ?
+# NOTE not every increment changes the ESC speed
+# NOTE the motor at -9 is slower than at 12. Indicative of bad pwm min/max?
+# this is good, but not sure why there is a larger deadone in one direction than the other
+# FWD_THROTTLE_DEADZONE = 12 
+# REV_THROTTLE_DEADZONE = 9
 
 
 # control the ESC through PWM by treating it as a servo
-# currently doesn't work until set to angle 7/100
 ESC = AngularServo(ESC_PWM_PIN, min_angle= FULL_REV_THROTTLE, max_angle=FULL_FWD_THROTTLE, min_pulse_width=1/1000, max_pulse_width=2/1000, pin_factory=factory)
 
 # initialize the GPIO pin to switch on/off the ESC
@@ -72,8 +73,6 @@ def escOff():
 
 
 # initialize the ESC by running the calibration routine:
-# NOTE not sure if should go all the way down or to 50 - if we should have reverse throttle?
-# should we say goes from -100 to +100? idek
 def escCalibrate():
 	print("calibrating:")
 	print("setting max throttle")
@@ -83,7 +82,6 @@ def escCalibrate():
 	print("should hear two beeps")
 	sleep(1) # wait a second
 	print("setting neutral throttle ")
-	# TODO figure out if this should be 50 or 0
 	setThrottle(NEUTRAL_THROTTLE) 
 	print("should hear long beep")
 	sleep(2) # hold neutral throttle for two seconds
