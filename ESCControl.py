@@ -37,6 +37,9 @@ factory=PiGPIOFactory()
 
 try:
     # control the ESC through PWM by treating it as a servp
+    # TODO try playing around with the pulse widths to see if can make ESC work at pulse width of 1. 
+    # currently doesn't work until set to angle of 10
+    # NOTE do we necessarily want AngularServo? Unsure. Want to be able to spin motor in reverse
     ESC = AngularServo(13, min_angle=0, max_angle=100, min_pulse_width=1/1000, max_pulse_width=2/1000, pin_factory=factory)
 
     # initialize the GPIO pin to switch on/off the ESC
@@ -50,7 +53,7 @@ try:
     # NOTE not sure if should go all the way down or to 50 - if we should have reverse throttle?
     # should we say goes from -100 to +100? idek
     ESC.angle=0 # throttle down. should now be calibrated
-    # sleep(0.5) # wait a moment before anything else
+    sleep(1) # wait a moment before anything else
 
     # loop infinitley ramping up throttle
     while (True):
