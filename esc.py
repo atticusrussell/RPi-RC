@@ -129,15 +129,15 @@ def setThrottle(throttle):
 
 # TODO this function is a work in progress. Implement programming from pdf 
 # NOTE not high priority - default programming will work for now
-# def escProgram():
-# 	setThrottle(FULL_FWD_THROTTLE)
-# 	escOn()
-# 	print("After 2 seconds a “-B-B” will sound. ")
-# 	sleep(2)
-# 	print("Wait another 5 seconds and the ESC will give a rising tone to indicate you have entered Programming Mode")
-# 	sleep(5)
-# 	print("You will hear 4 tones in a loop indicating Programmable Items.")
-# 	print("Push the Throttle Trigger to full brake within 3 seconds after the tone sounds matching the programmable item you want to select.")
+def escProgram():
+	setThrottle(FULL_FWD_THROTTLE)
+	escOn()
+	print("After 2 seconds a “-B-B” will sound. ")
+	sleep(2)
+	print("Wait another 5 seconds and the ESC will give a rising tone to indicate you have entered Programming Mode")
+	sleep(5)
+	print("You will hear 4 tones in a loop indicating Programmable Items.")
+	print("Push the Throttle Trigger to full brake within 3 seconds after the tone sounds matching the programmable item you want to select.")
 
 
 
