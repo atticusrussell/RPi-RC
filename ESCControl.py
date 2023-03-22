@@ -45,7 +45,6 @@ FULL_THROTTLE = 100
 MIN_MOV_THROTTLE = 7
 
 
-
 # control the ESC through PWM by treating it as a servo
 # currently doesn't work until set to angle 7/100
 ESC = AngularServo(ESC_PWM_PIN, min_angle= NO_THROTTLE, max_angle=FULL_THROTTLE, min_pulse_width=1/1000, max_pulse_width=2/1000, pin_factory=factory)
@@ -61,7 +60,8 @@ GPIO.output(ESC_POWER_PIN, 0) # start with the pin off
 def calibrateESC():
 	print("calibrating:")
 	ESC.angle=FULL_THROTTLE # start at full throttle
-	GPIO.output(23, 1) # turn on the ESC
+	print("powering on ESC")
+	GPIO.output(ESC_POWER_PIN, 1) # turn on the ESC
 	print("setting max throttle")
 	sleep(2) # hold full throttle for two seconds 
 	ESC.angle=NO_THROTTLE # throttle down. 
@@ -69,6 +69,20 @@ def calibrateESC():
 	sleep(2) # wait a moment before anything else
 	print("ESC should be calibrated")
 
+def normalESCStartup():
+	print("ESC starting up")
+	setThrottle = NO_THROTTLE
+	print("Throttle:", setThrottle, "/", FULL_THROTTLE)
+	ESC.angle=setThrottle
+	print("powering on ESC")
+	GPIO.output(ESC_POWER_PIN, 1) # turn on the ESC
+	print("listen to the ESC beeps now")
+	sleep(2)
+	print("first beeps: 3 for 3 cell battery, 4 for 4 cell")
+	sleep(2)
+	print("second beeps: 1 for brake on, 2 for brake off")
+	sleep(2)
+	print("ESC startup done")
 
 def cycleThrottle():
 	print("no throttle")
@@ -87,7 +101,7 @@ def cycleThrottle():
 	
 
 try:
-	calibrateESC()
+	normalESCStartup()
 	cycleThrottle()
 
 
