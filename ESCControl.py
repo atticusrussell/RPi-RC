@@ -54,28 +54,43 @@ GPIO.setup(ESC_POWER_PIN, GPIO.OUT)
 GPIO.output(ESC_POWER_PIN, 0) # start with the pin off
 
 
+# turn on the ESC
+def escOn():
+	print("powering on ESC")
+	GPIO.output(ESC_POWER_PIN, 1) # turn on the ESC
+	print("ESC on")
+
+
+# just turn off the ESC 
+def escOff():
+	print("powering off ESC")
+	GPIO.output(ESC_POWER_PIN, 0) # turn off the ESC
+	print("ESC off")
+
+
 # initialize the ESC by running the calibration routine:
 # NOTE not sure if should go all the way down or to 50 - if we should have reverse throttle?
 # should we say goes from -100 to +100? idek
-def calibrateESC():
+def escCalibrate():
 	print("calibrating:")
-	ESC.angle=FULL_THROTTLE # start at full throttle
-	print("powering on ESC")
-	GPIO.output(ESC_POWER_PIN, 1) # turn on the ESC
 	print("setting max throttle")
+	setThrottle(FULL_THROTTLE) # start at full throttle
+	escOn()
 	sleep(2) # hold full throttle for two seconds 
-	ESC.angle=NO_THROTTLE # throttle down. 
+	print("should hear two beeps")
+	sleep(1) # wait a second
 	print("setting neutral throttle ")
-	sleep(2) # wait a moment before anything else
+	setThrottle(50) # TODO figure out if this should be 50 or 0
+	sleep(4) # hold neutral throttle for two seconds
+	print("should hear long beep")
+	sleep(1) # wait a second
 	print("ESC should be calibrated")
 
-def normalESCStartup():
+
+def escStart():
 	print("ESC starting up")
-	setThrottle = NO_THROTTLE
-	print("Throttle:", setThrottle, "/", FULL_THROTTLE)
-	ESC.angle=setThrottle
-	print("powering on ESC")
-	GPIO.output(ESC_POWER_PIN, 1) # turn on the ESC
+	setThrottle(NO_THROTTLE)
+	escOn()
 	print("listen to the ESC beeps now")
 	sleep(2)
 	print("first beeps: 3 for 3 cell battery, 4 for 4 cell")
@@ -83,6 +98,7 @@ def normalESCStartup():
 	print("second beeps: 1 for brake on, 2 for brake off")
 	sleep(2)
 	print("ESC startup done")
+
 
 def cycleThrottle():
 	print("no throttle")
@@ -107,11 +123,23 @@ def setThrottle(throttle):
 	print("Throttle:", throttle, "/", FULL_THROTTLE)
 
 
+# TODO this function is a work in progress 
+def escProgram():
+	setThrottle(100)
+	escOn()
+	print("After 2 seconds a “-B-B” will sound. ")
+	sleep(2)
+	print("Wait another 5 seconds and the ESC will give a rising tone to indicate you have entered Programming Mode")
+	sleep(5)
+	print("You will hear 4 tones in a loop indicating Programmable Items.")
+	print("Push the Throttle Trigger to full brake within 3 seconds after the tone sounds matching the programmable item you want to select.")
+
+
 
 # if this isn't being called from another program
 if __name__ == '__main__':
 	try:
-		normalESCStartup()
+		escStart()
 		cycleThrottle()
 		setThrottle(5)
 		sleep(5)
