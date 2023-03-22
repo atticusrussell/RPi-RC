@@ -49,8 +49,8 @@ try:
     sleep(2) # hold full throttle for two seconds 
     # NOTE not sure if should go all the way down or to 50 - if we should have reverse throttle?
     # should we say goes from -100 to +100? idek
-    ESC.angle=50 # throttle down. should now be calibrated
-    sleep(0.5) # wait a moment before anything else
+    ESC.angle=0 # throttle down. should now be calibrated
+    # sleep(0.5) # wait a moment before anything else
 
     # loop infinitley ramping up throttle
     while (True):
