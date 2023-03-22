@@ -35,19 +35,23 @@ GPIO.setmode(GPIO.BCM)
 from gpiozero.pins.pigpio import PiGPIOFactory
 factory=PiGPIOFactory()
 
-# set rpi 4b pins to be plugged in
+# set RPi 4b pins to be plugged in
 ESC_POWER_PIN = 23
 ESC_PWM_PIN = 13
 
-# define params that will be needed
-NO_THROTTLE = 0
-FULL_THROTTLE = 100
-MIN_MOV_THROTTLE = 7
+# define throttle parameters
+FULL_REV_THROTTLE = -100
+NEUTRAL_THROTTLE = 0
+FULL_FWD_THROTTLE = 100
+# NOTE not every increment changes the ESC speed
+# NOTE the motor at -9 is slower than at 12. Indicative of bad pwm min/max?
+# this is good, but not sure why there is a larger deadone in one direction than the other
+# FWD_THROTTLE_DEADZONE = 12 
+# REV_THROTTLE_DEADZONE = 9
 
 
 # control the ESC through PWM by treating it as a servo
-# currently doesn't work until set to angle 7/100
-ESC = AngularServo(ESC_PWM_PIN, min_angle= NO_THROTTLE, max_angle=FULL_THROTTLE, min_pulse_width=1/1000, max_pulse_width=2/1000, pin_factory=factory)
+ESC = AngularServo(ESC_PWM_PIN, min_angle= FULL_REV_THROTTLE, max_angle=FULL_FWD_THROTTLE, min_pulse_width=1/1000, max_pulse_width=2/1000, pin_factory=factory)
 
 # initialize the GPIO pin to switch on/off the ESC
 GPIO.setup(ESC_POWER_PIN, GPIO.OUT)
@@ -69,27 +73,30 @@ def escOff():
 
 
 # initialize the ESC by running the calibration routine:
-# NOTE not sure if should go all the way down or to 50 - if we should have reverse throttle?
-# should we say goes from -100 to +100? idek
 def escCalibrate():
 	print("calibrating:")
 	print("setting max throttle")
-	setThrottle(FULL_THROTTLE) # start at full throttle
+	setThrottle(FULL_FWD_THROTTLE) # start at full throttle
 	escOn()
 	sleep(2) # hold full throttle for two seconds 
 	print("should hear two beeps")
 	sleep(1) # wait a second
 	print("setting neutral throttle ")
-	setThrottle(50) # TODO figure out if this should be 50 or 0
-	sleep(4) # hold neutral throttle for two seconds
+	setThrottle(NEUTRAL_THROTTLE) 
 	print("should hear long beep")
-	sleep(1) # wait a second
+	sleep(2) # hold neutral throttle for two seconds
 	print("ESC should be calibrated")
+	print("normal startup noises:")
+	print("first beeps: 3 for 3 cell battery, 4 for 4 cell")
+	sleep(1)
+	print("second beeps: 1 for brake on, 2 for brake off")
+	sleep(1)
+	print("ESC startup done")
 
 
 def escStart():
 	print("ESC starting up")
-	setThrottle(NO_THROTTLE)
+	setThrottle(NEUTRAL_THROTTLE)
 	escOn()
 	print("listen to the ESC beeps now")
 	sleep(2)
@@ -100,32 +107,32 @@ def escStart():
 	print("ESC startup done")
 
 
-def cycleThrottle():
-	print("no throttle")
-	ESC.angle=0 # throttle off
-	sleep(2)
-	print("min throttle that moves")
-	ESC.angle=MIN_MOV_THROTTLE
-	sleep(2)
-	print("cycling through some throttle values")
-	for i in range (3):
-		setESC = i + MIN_MOV_THROTTLE
-		print("Throttle:", setESC, "/", FULL_THROTTLE)
-		ESC.angle= setESC
-		sleep(1) # wait a second
-	setESC=0
-	print("Throttle:", setESC,"/", FULL_THROTTLE)
-	ESC.angle = setESC
+# def cycleThrottle():
+# 	print("no throttle")
+# 	ESC.angle=0 # throttle off
+# 	sleep(2)
+# 	print("min throttle that moves")
+# 	ESC.angle=MIN_MOV_THROTTLE
+# 	sleep(2)
+# 	print("cycling through some throttle values")
+# 	for i in range (3):
+# 		setESC = i + MIN_MOV_THROTTLE
+# 		print("Throttle:", setESC, "/", FULL_THROTTLE)
+# 		ESC.angle= setESC
+# 		sleep(1) # wait a second
+# 	setESC=0
+# 	print("Throttle:", setESC,"/", FULL_THROTTLE)
+# 	ESC.angle = setESC
 	
 
 def setThrottle(throttle):
 	ESC.angle = throttle
-	print("Throttle:", throttle, "/", FULL_THROTTLE)
+	print("Throttle:", throttle, "/",u"\u00B1", FULL_FWD_THROTTLE)
 
 
 # TODO this function is a work in progress 
 def escProgram():
-	setThrottle(100)
+	setThrottle(FULL_FWD_THROTTLE)
 	escOn()
 	print("After 2 seconds a “-B-B” will sound. ")
 	sleep(2)
@@ -139,10 +146,11 @@ def escProgram():
 # if this isn't being called from another program
 if __name__ == '__main__':
 	try:
-		escStart()
-		cycleThrottle()
-		setThrottle(5)
-		sleep(5)
+		escCalibrate()
+		# escStart()
+		# cycleThrottle()
+		# setThrottle(5)
+		# sleep(5)
 
 
 	except KeyboardInterrupt: # If CTRL+C is pressed, exit cleanly:
