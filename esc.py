@@ -43,11 +43,12 @@ ESC_PWM_PIN = 13
 FULL_REV_THROTTLE = -100
 NEUTRAL_THROTTLE = 0
 FULL_FWD_THROTTLE = 100
+
 # NOTE not every increment changes the ESC speed
-# NOTE the motor at -9 is slower than at 12. Indicative of bad pwm min/max?
-# this is good, but not sure why there is a larger deadone in one direction than the other
-# FWD_THROTTLE_DEADZONE = 12 
-# REV_THROTTLE_DEADZONE = 9
+# NOTE deadzone larger witb positive throttle. the motor at -9 is slower than at 12, so at least the power appears to be linear
+# TODO take these deadzones into account when setting throttle
+FWD_THROTTLE_DEADZONE = 12 
+REV_THROTTLE_DEADZONE = -9
 
 
 # control the ESC through PWM by treating it as a servo
@@ -105,52 +106,37 @@ def escStart():
 	print("second beeps: 1 for brake on, 2 for brake off")
 	sleep(2)
 	print("ESC startup done")
-
-
-# def cycleThrottle():
-# 	print("no throttle")
-# 	ESC.angle=0 # throttle off
-# 	sleep(2)
-# 	print("min throttle that moves")
-# 	ESC.angle=MIN_MOV_THROTTLE
-# 	sleep(2)
-# 	print("cycling through some throttle values")
-# 	for i in range (3):
-# 		setESC = i + MIN_MOV_THROTTLE
-# 		print("Throttle:", setESC, "/", FULL_THROTTLE)
-# 		ESC.angle= setESC
-# 		sleep(1) # wait a second
-# 	setESC=0
-# 	print("Throttle:", setESC,"/", FULL_THROTTLE)
-# 	ESC.angle = setESC
 	
 
 def setThrottle(throttle):
+	# account for deadzones and cap the throttle
+	if throttle > NEUTRAL_THROTTLE:
+		if throttle < FWD_THROTTLE_DEADZONE:
+			throttle += FWD_THROTTLE_DEADZONE
+		# cap throttle at max
+		elif throttle > FULL_FWD_THROTTLE:
+			throttle = FULL_FWD_THROTTLE
+	elif throttle < NEUTRAL_THROTTLE:
+		if throttle > REV_THROTTLE_DEADZONE:
+			throttle -= REV_THROTTLE_DEADZONE
+		# cap throttle at min
+		elif throttle < FULL_REV_THROTTLE:
+			throttle = FULL_REV_THROTTLE
+	
 	ESC.angle = throttle
 	print("Throttle:", throttle, "/",u"\u00B1", FULL_FWD_THROTTLE)
-
-
-# TODO this function is a work in progress 
-def escProgram():
-	setThrottle(FULL_FWD_THROTTLE)
-	escOn()
-	print("After 2 seconds a “-B-B” will sound. ")
-	sleep(2)
-	print("Wait another 5 seconds and the ESC will give a rising tone to indicate you have entered Programming Mode")
-	sleep(5)
-	print("You will hear 4 tones in a loop indicating Programmable Items.")
-	print("Push the Throttle Trigger to full brake within 3 seconds after the tone sounds matching the programmable item you want to select.")
-
 
 
 # if this isn't being called from another program
 if __name__ == '__main__':
 	try:
+		# little demo routine
 		escCalibrate()
-		# escStart()
-		# cycleThrottle()
-		# setThrottle(5)
-		# sleep(5)
+		setThrottle(1)
+		wait(2)
+		setThrottle(-1)
+		wait(2)
+		setThrottle(0)
 
 
 	except KeyboardInterrupt: # If CTRL+C is pressed, exit cleanly:
