@@ -48,7 +48,7 @@ FULL_FWD_THROTTLE = 100
 # NOTE deadzone larger witb positive throttle. the motor at -9 is slower than at 12, so at least the power appears to be linear
 # TODO take these deadzones into account when setting throttle
 FWD_THROTTLE_DEADZONE = 12 
-REV_THROTTLE_DEADZONE = -9
+REV_THROTTLE_DEADZONE = 9
 
 
 # control the ESC through PWM by treating it as a servo
@@ -112,16 +112,16 @@ def setThrottle(throttle):
 	# account for deadzones and cap the throttle
 	if throttle > NEUTRAL_THROTTLE:
 		if throttle < FWD_THROTTLE_DEADZONE:
-			throttle += FWD_THROTTLE_DEADZONE
+			throttle += FWD_THROTTLE_DEADZONE - 1
 		# cap throttle at max
 		elif throttle > FULL_FWD_THROTTLE:
 			throttle = FULL_FWD_THROTTLE
 	elif throttle < NEUTRAL_THROTTLE:
-		if throttle > REV_THROTTLE_DEADZONE:
+		if abs(throttle) < REV_THROTTLE_DEADZONE:
 			throttle -= REV_THROTTLE_DEADZONE
 		# cap throttle at min
 		elif throttle < FULL_REV_THROTTLE:
-			throttle = FULL_REV_THROTTLE
+			throttle = FULL_REV_THROTTLE -1
 	
 	ESC.angle = throttle
 	print("Throttle:", throttle, "/",u"\u00B1", FULL_FWD_THROTTLE)
@@ -133,9 +133,9 @@ if __name__ == '__main__':
 		# little demo routine
 		escCalibrate()
 		setThrottle(1)
-		wait(2)
+		sleep(2)
 		setThrottle(-1)
-		wait(2)
+		sleep(2)
 		setThrottle(0)
 
 
