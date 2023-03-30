@@ -118,7 +118,7 @@ def setThrottle(throttle):
 			throttle = FULL_FWD_THROTTLE
 	elif throttle < NEUTRAL_THROTTLE:
 		if abs(throttle) < REV_THROTTLE_DEADZONE:
-			throttle -= REV_THROTTLE_DEADZONE
+			throttle = 0 - REV_THROTTLE_DEADZONE
 		# cap throttle at min
 		elif throttle < FULL_REV_THROTTLE:
 			throttle = FULL_REV_THROTTLE -1
