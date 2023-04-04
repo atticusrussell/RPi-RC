@@ -7,6 +7,16 @@ factory=PiGPIOFactory()
 # these servo params are tuned for the Spektrum s605 horizon hobby servo
 servo = AngularServo(18, min_angle=0, max_angle=180, min_pulse_width=0.65/1000, max_pulse_width=2.5/1000, pin_factory=factory)
 
+
+def setAngle(angle):
+	servo.angle = angle
+
+
+def getAngle():
+	return servo.angle
+
+
+
 # if this isn't being called from another program
 if __name__ == '__main__':
 	try:
