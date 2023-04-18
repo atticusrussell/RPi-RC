@@ -40,15 +40,13 @@ ESC_POWER_PIN = 23
 ESC_PWM_PIN = 13
 
 # define throttle parameters
-FULL_REV_THROTTLE = -100
+FULL_REV_THROTTLE = -90
 NEUTRAL_THROTTLE = 0
-FULL_FWD_THROTTLE = 100
+FULL_FWD_THROTTLE = 90
 
-# NOTE not every increment changes the ESC speed
-# NOTE deadzone larger witb positive throttle. the motor at -9 is slower than at 12, so at least the power appears to be linear
-# TODO take these deadzones into account when setting throttle
-FWD_THROTTLE_DEADZONE = 12 
-REV_THROTTLE_DEADZONE = 9
+# bare minumum throttles that will move the motor when 90 max -90 min
+MIN_FWD_THROTTLE = 10.1
+MIN_REV_THROTTLE = -8.1
 
 
 # control the ESC through PWM by treating it as a servo
@@ -108,23 +106,29 @@ def start():
 	print("ESC startup done")
 	
 
-def setThrottle(throttle):
-	# account for deadzones and cap the throttle
-	if throttle > NEUTRAL_THROTTLE:
-		if throttle < FWD_THROTTLE_DEADZONE:
-			throttle += FWD_THROTTLE_DEADZONE - 1
-		# cap throttle at max
-		elif throttle > FULL_FWD_THROTTLE:
-			throttle = FULL_FWD_THROTTLE
+def fixThrottle(throttle):
+	# handle forward throttle
+	if throttle > NEUTRAL_THROTTLE:	
+		# account for deadzone
+		throttle += MIN_FWD_THROTTLE - 1
+		
+	# handle reverse throttle
 	elif throttle < NEUTRAL_THROTTLE:
-		if abs(throttle) < REV_THROTTLE_DEADZONE:
-			throttle -= REV_THROTTLE_DEADZONE - 1
-		# cap throttle at min
-		elif throttle < FULL_REV_THROTTLE:
-			throttle = FULL_REV_THROTTLE
-	
-	ESC.angle = throttle
-	print("Throttle:", throttle, "/",u"\u00B1", FULL_FWD_THROTTLE)
+		throttle += MIN_REV_THROTTLE + 1 
+
+	# cap throttle
+	if throttle > FULL_FWD_THROTTLE:
+		throttle = FULL_FWD_THROTTLE
+	elif throttle < FULL_REV_THROTTLE:
+		throttle = FULL_REV_THROTTLE
+		
+	return throttle
+
+
+def setThrottle(throttle):
+	adjustThrottle = fixThrottle(throttle)
+	ESC.angle = adjustThrottle
+	print("Throttle:", adjustThrottle, "/",u"\u00B1", FULL_FWD_THROTTLE)
 
 
 def setThrottleRaw(throttle):
