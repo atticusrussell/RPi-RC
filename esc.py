@@ -135,13 +135,12 @@ def setThrottleRaw(throttle):
 # if this isn't being called from another program do a little test routine
 if __name__ == '__main__':
 	try:
-		# little demo routine
-		escCalibrate()
-		setThrottle(1)
-		sleep(2)
-		setThrottle(-1)
-		sleep(2)
-		setThrottle(0)
+		calibrate()
+		testvector = [1, 2, 3, 0, -1, -2, -3, 0]
+		for i in testvector:
+			setThrottle(i)
+			sleep(2)
+		pwrOff()
 
 
 	except KeyboardInterrupt: # If CTRL+C is pressed, exit cleanly:
@@ -152,4 +151,6 @@ if __name__ == '__main__':
 
 	finally:
 		print("clean up") 
+		setThrottle(0)
+		pwrOff()
 		GPIO.cleanup() # cleanup all GPIO 
