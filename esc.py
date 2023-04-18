@@ -118,10 +118,10 @@ def setThrottle(throttle):
 			throttle = FULL_FWD_THROTTLE
 	elif throttle < NEUTRAL_THROTTLE:
 		if abs(throttle) < REV_THROTTLE_DEADZONE:
-			throttle = 0 - REV_THROTTLE_DEADZONE
+			throttle -= REV_THROTTLE_DEADZONE - 1
 		# cap throttle at min
 		elif throttle < FULL_REV_THROTTLE:
-			throttle = FULL_REV_THROTTLE -1
+			throttle = FULL_REV_THROTTLE
 	
 	ESC.angle = throttle
 	print("Throttle:", throttle, "/",u"\u00B1", FULL_FWD_THROTTLE)
