@@ -60,25 +60,25 @@ GPIO.output(ESC_POWER_PIN, 0) # start with the pin off
 
 
 # turn on the ESC
-def escOn():
+def pwrOn():
 	print("powering on ESC")
 	GPIO.output(ESC_POWER_PIN, 1) # turn on the ESC
 	print("ESC on")
 
 
 # just turn off the ESC 
-def escOff():
+def pwrOff():
 	print("powering off ESC")
 	GPIO.output(ESC_POWER_PIN, 0) # turn off the ESC
 	print("ESC off")
 
 
 # initialize the ESC by running the calibration routine:
-def escCalibrate():
+def calibrate():
 	print("calibrating:")
 	print("setting max throttle")
 	setThrottle(FULL_FWD_THROTTLE) # start at full throttle
-	escOn()
+	pwrOn()
 	sleep(2) # hold full throttle for two seconds 
 	print("should hear two beeps")
 	sleep(1) # wait a second
@@ -95,10 +95,10 @@ def escCalibrate():
 	print("ESC startup done")
 
 
-def escStart():
+def start():
 	print("ESC starting up")
 	setThrottle(NEUTRAL_THROTTLE)
-	escOn()
+	pwrOn()
 	print("listen to the ESC beeps now")
 	sleep(2)
 	print("first beeps: 3 for 3 cell battery, 4 for 4 cell")
@@ -127,7 +127,12 @@ def setThrottle(throttle):
 	print("Throttle:", throttle, "/",u"\u00B1", FULL_FWD_THROTTLE)
 
 
-# if this isn't being called from another program
+def setThrottleRaw(throttle):
+	ESC.angle = throttle
+	print("Throttle:", throttle, "/",u"\u00B1", FULL_FWD_THROTTLE)
+
+
+# if this isn't being called from another program do a little test routine
 if __name__ == '__main__':
 	try:
 		# little demo routine
