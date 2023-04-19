@@ -26,6 +26,9 @@
  its collector is connectd to pin 2 of the relay
  its emitter is connected to the ground of the 5v supply */
 
+//   build with: g++ -o foo_cpp  foo.cpp -lpigpio -lrt -lpthread
+//  * run with : sudo ./foo_cpp
+
 // #include "ServoMotor.h"
 
 #include <iostream>
@@ -107,8 +110,90 @@ class Servo{
 };
 
 
+class AngularServo : public Servo{
+    public:
+        // constructor
+        AngularServo(int pin, int minAngle, int maxAngle, int minPulseWidthUs, int maxPulseWidthUs) : Servo(pin){
+            __minAngle = minAngle;
+            __maxAngle = maxAngle;
+            __minPulseWidthUs = minPulseWidthUs;
+            __maxPulseWidthUs = maxPulseWidthUs;
+        }
 
-        
+        void setAngle(int angle){
+            __angle = angle;
+            if (__angle < __minAngle){
+                __angle = __minAngle;
+            }
+            if (__angle > __maxAngle){
+                __angle = __maxAngle;
+            }
+
+            int pulseWidth = __minPulseWidthUs + (__angle * (__maxPulseWidthUs - __minPulseWidthUs) / (__maxAngle - __minAngle));
+            setPulseWidth(pulseWidth);
+        }
+
+        int getAngle(){
+            int pulseWidth = getPulseWidth();
+            int angle = __minAngle + (pulseWidth - __minPulseWidthUs) * (__maxAngle - __minAngle) / (__maxPulseWidthUs - __minPulseWidthUs);
+            return angle;
+        }
+
+    protected:
+        int __angle;
+        int __minAngle;
+        int __maxAngle;
+        int __minPulseWidthUs;
+        int __maxPulseWidthUs;
+};
+
+
+class ESC : public AngularServo{
+    public:
+        // constructor
+        ESC(int pwmPin, int fullRevThrottle, int fullFwdThrottle, int minPulseWidthUs, int maxPulseWidthUs, int powerPin,  int neutralThrottle, float minFwdThrottle, float minRevThrottle) : AngularServo(pwmPin, fullRevThrottle, fullFwdThrottle, minPulseWidthUs, maxPulseWidthUs){
+            __powerPin = powerPin;
+            __neutralThrottle = neutralThrottle;
+            __minFwdThrottle = minFwdThrottle;
+            __minRevThrottle = minRevThrottle;
+        };
+
+        // TODO implement the rest of the methods for ESC
+
+    protected:
+        int __powerPin;
+        int __neutralThrottle;
+        float __minFwdThrottle;
+        float __minRevThrottle;
+};
+
+
+int main() {
+    if (gpioInitialise() < 0) {
+        std::cerr << "Error initializing pigpio" << std::endl;
+        return 1;
+    }
+
+    // test the actual servo
+
+    AngularServo rudderServo(18, 0, 180, 650, 2500); 
+    int angle;
+
+    while (true) {
+        cout << "Enter angle (0-180, -1 to exit): ";
+        cin >> angle;
+
+        if (angle == -1) {
+            break;
+        }
+
+        rudderServo.setAngle(angle);
+        sleep(1);
+    }
+
+    gpioTerminate();
+    return 0;
+}
 
 
 
