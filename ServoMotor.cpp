@@ -11,8 +11,10 @@
 #include <unistd.h>
 #include <pigpio.h>
 
-ServoMotor::ServoMotor(int pin) {
+ServoMotor::ServoMotor(int pin, int pulseWidthMin, int pulseWidthMax) {
     ServoMotor::_pin = pin;
+	ServoMotor::_pulseWidthMin = pulseWidthMin;
+	ServoMotor::_pulseWidthMax = pulseWidthMax;
     ServoMotor::_angle = 0;
     gpioSetMode(_pin, PI_OUTPUT);
 }
@@ -33,13 +35,45 @@ void ServoMotor::write(int angle) {
     gpioServo(ServoMotor::_pin, pulseWidth);
 }
 
+
+AngularServo::AngularServo(int pin, int minAngle, int maxAngle, int minPulseWidthMs, int maxPulseWidthMs) {
+	AngularServo::_pin = pin;
+	AngularServo::_minAngle = minAngle;
+	AngularServo::_maxAngle = maxAngle;
+	AngularServo::_minPulseWidthMs = minPulseWidthMs;
+	AngularServo::_maxPulseWidthMs = maxPulseWidthMs;
+	AngularServo::_angle = 0;
+	gpioSetMode(_pin, PI_OUTPUT);
+}
+
+
+AngularServo::~AngularServo() {
+}
+
+
+void AngularServo::setAngle(int angle) {
+	AngularServo::_angle = angle;
+	if (AngularServo::_angle < AngularServo::_minAngle) AngularServo::_angle = AngularServo::_minAngle;
+	if (AngularServo::_angle > AngularServo::_maxAngle) AngularServo::_angle = AngularServo::_maxAngle;
+
+	int pulseWidth = AngularServo::_minPulseWidthMs + (AngularServo::_angle * (AngularServo::_maxPulseWidthMs - AngularServo::_minPulseWidthMs) / (AngularServo::_maxAngle - AngularServo::_minAngle));
+	std::cout << "Pulse width: " << pulseWidth << std::endl;
+	gpioServo(AngularServo::_pin, pulseWidth);
+}
+
+
+int AngularServo::getAngle() const {
+	return AngularServo::_angle;
+}
+
+
 int main() {
     if (gpioInitialise() < 0) {
         std::cerr << "Error initializing pigpio" << std::endl;
         return 1;
     }
 
-    ServoMotor servo(27); 
+    AngularServo servo(18, 0, 180, 650, 2500); 
     int angle;
 
     while (true) {
@@ -50,7 +84,7 @@ int main() {
             break;
         }
 
-        servo.write(angle);
+        servo.setAngle(angle);
         sleep(1);
     }
 
