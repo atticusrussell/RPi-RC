@@ -26,10 +26,13 @@
  its collector is connectd to pin 2 of the relay
  its emitter is connected to the ground of the 5v supply */
 
+#include "ServoMotor.h"
+
 #include <iostream>
 #include <pigpio.h>
 #include <unistd.h>
 #include <cmath>
+using namespace std;
 
 // RPi 4b pins to be plugged in
 constexpr int ESC_POWER_PIN = 23;
@@ -58,84 +61,51 @@ double fixThrottle(double throttle);
 void setThrottle(double throttle);
 void setThrottleRaw(double throttle);
 
-int main() {
-    if (gpioInitialise() < 0) {
-        std::cerr << "Failed to initialize GPIO" << std::endl;
-        return 1;
-    }
-
-    gpioSetMode(ESC_POWER_PIN, PI_OUTPUT);
-    gpioWrite(ESC_POWER_PIN, 0);
-
-    gpioSetMode(ESC_PWM_PIN, PI_OUTPUT);
-    gpioSetPWMfrequency(ESC_PWM_PIN, PWM_FREQUENCY);
-    gpioSetPWMrange(ESC_PWM_PIN, PWM_RANGE);
-
-    try {
-        calibrate();
-
-        double testvector[] = {1.0, 2.0, 3.0, 0.0, -1.0, -2.0, -3.0, 0.0};
-        for (double i : testvector) {
-            setThrottle(i);
-            sleep(2);
-        }
-
-        pwrOff();
-    } catch (...) {
-        std::cerr << "Error occurred" << std::endl;
-    }
-
-    setThrottle(0);
-    pwrOff();
-    gpioTerminate();
-
-    return 0;
-}
 
 void pwrOn() {
-    std::cout << "Powering on ESC" << std::endl;
+    cout << "Powering on ESC" << endl;
     gpioWrite(ESC_POWER_PIN, 1);
-    std::cout << "ESC on" << std::endl;
+    cout << "ESC on" << endl;
 }
 
 void pwrOff() {
-    std::cout << "Powering off ESC" << std::endl;
+    cout << "Powering off ESC" << endl;
     gpioWrite(ESC_POWER_PIN, 0);
-    std::cout << "ESC off" << std::endl;
+    cout << "ESC off" << endl;
 }
 
 void calibrate() {
-    std::cout << "Calibrating:" << std::endl;
-    std::cout << "Setting max throttle" << std::endl;
+    cout << "Calibrating:" << endl;
+    cout << "Setting max throttle" << endl;
     setThrottle(FULL_FWD_THROTTLE);
     pwrOn();
-    sleep(2);
-    std::cout << "Should hear two beeps" << std::endl;
+    sleep(3);
+    cout << "Should hear two beeps" << endl;
     sleep(1);
-    std::cout << "Setting neutral throttle" << std::endl;
+    cout << "Setting neutral throttle" << endl;
     setThrottle(NEUTRAL_THROTTLE);
-    std::cout << "Should hear long beep" << std::endl;
+    cout << "Should hear long beep" << endl;
     sleep(2);
-    std::cout << "ESC should be calibrated" << std::endl;
-    std::cout << "Normal startup noises:" << std::endl;
-    std::cout << "First beeps: 3 for 3 cell battery, 4 for 4 cell" << std::endl;
+    cout << "ESC should be calibrated" << endl;
+    cout << "Normal startup noises:" << endl;
+    cout << "First beeps: 3 for 3 cell battery, 4 for 4 cell" << endl;
     sleep(1);
-    std::cout << "Second beeps: 1 for brake on, 2 for brake off" << std::endl;
+    cout << "Second beeps: 1 for brake on, 2 for brake off" << endl;
     sleep(1);
-    std::cout << "ESC startup done" << std::endl;
+    cout << "ESC startup done" << endl;
 }
 
 void start() {
-    std::cout << "ESC starting up" << std::endl;
+    cout << "ESC starting up" << endl;
     setThrottle(NEUTRAL_THROTTLE);
     pwrOn();
-    std::cout << "Listen to the ESC beeps now" << std::endl;
+    cout << "Listen to the ESC beeps now" << endl;
     sleep(2);
-    std::cout << "First beeps: 3 for 3 cell battery, 4 for 4 cell" << std::endl;
+    cout << "First beeps: 3 for 3 cell battery, 4 for 4 cell" << endl;
     sleep(2);
-    std::cout << "Second beeps: 1 for brake on, 2 for brake off" << std::endl;
+    cout << "Second beeps: 1 for brake on, 2 for brake off" << endl;
     sleep(2);
-    std::cout << "ESC startup done" << std::endl;
+    cout << "ESC startup done" << endl;
 }
 
 double fixThrottle(double throttle) {
@@ -157,15 +127,50 @@ double fixThrottle(double throttle) {
 void setThrottle(double throttle) {
     double adjustThrottle = fixThrottle(throttle);
     double pulseWidth = (adjustThrottle - FULL_REV_THROTTLE) * (MAX_PULSE_WIDTH - MIN_PULSE_WIDTH) / (FULL_FWD_THROTTLE - FULL_REV_THROTTLE) + MIN_PULSE_WIDTH;
-    int dutyCycle = std::round(pulseWidth * PWM_RANGE);
+    int dutyCycle = round(pulseWidth * PWM_RANGE);
     gpioPWM(ESC_PWM_PIN, dutyCycle);
-    std::cout << "Throttle: " << adjustThrottle << " / ±" << FULL_FWD_THROTTLE << std::endl;
+    cout << "Throttle: " << adjustThrottle << " / ±" << FULL_FWD_THROTTLE << endl;
 }
 
 void setThrottleRaw(double throttle) {
     double pulseWidth = (throttle - FULL_REV_THROTTLE) * (MAX_PULSE_WIDTH - MIN_PULSE_WIDTH) / (FULL_FWD_THROTTLE - FULL_REV_THROTTLE) + MIN_PULSE_WIDTH;
-    int dutyCycle = std::round(pulseWidth * PWM_RANGE);
+    int dutyCycle = round(pulseWidth * PWM_RANGE);
     gpioPWM(ESC_PWM_PIN, dutyCycle);
-    std::cout << "Throttle: " << throttle << " / ±" << FULL_FWD_THROTTLE << std::endl;
+    cout << "Throttle: " << throttle << " / ±" << FULL_FWD_THROTTLE << endl;
 }
 
+
+int main() {
+    if (gpioInitialise() < 0) {
+        cerr << "Failed to initialize GPIO" << endl;
+        return 1;
+    }
+
+    AngularServo esc(ESC_PWM_PIN, FULL_REV_THROTTLE, FULL_FWD_THROTTLE, 1000, 2000);
+
+
+
+    gpioSetMode(ESC_POWER_PIN, PI_OUTPUT);
+    gpioWrite(ESC_POWER_PIN, 0);
+	sleep(1); // wait for the relay to turn off - cpp is too fast
+
+    try {
+        calibrate();
+
+        double testvector[] = {1.0, 2.0, 3.0, 0.0, -1.0, -2.0, -3.0, 0.0};
+        for (double i : testvector) {
+            setThrottle(i);
+            sleep(2);
+        }
+
+        pwrOff();
+    } catch (...) {
+        cerr << "Error occurred" << endl;
+    }
+
+    setThrottle(0);
+    pwrOff();
+    gpioTerminate();
+
+    return 0;
+}
