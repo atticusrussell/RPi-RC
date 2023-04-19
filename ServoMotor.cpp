@@ -4,6 +4,8 @@
  * @version 0.1
  * 
  * Servo Moto cpp file to take pin and angle of motor
+ * build with: g++ -o servo_motor_cpp  ServoMotor.cpp -lpigpio -lrt -lpthread
+ * run with : sudo ./servo_motor_cpp
  */
 #include "ServoMotor.h"
 
