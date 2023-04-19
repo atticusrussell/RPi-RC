@@ -8,19 +8,6 @@
 #ifndef SERVO_MOTOR_H
 #define SERVO_MOTOR_H
 
-class ServoMotor {
-    public:
-        ServoMotor(int pin, int pulseWidthMin, int pulseWidthMax);
-        ~ServoMotor();
-        void write(int angle);
-
-    private:
-        int _pin;
-        int _angle;
-        int _pulseWidthMin;
-        int _pulseWidthMax;
-};
-
 class AngularServo {
     public:
         AngularServo(int pin, int minAngle, int maxAngle, int minPulseWidthMs, int maxPulseWidthMs);
@@ -33,8 +20,8 @@ class AngularServo {
         int _angle;
         int _minAngle;
         int _maxAngle;
-        int _minPulseWidthMs;
-        int _maxPulseWidthMs;
+        int _minPulseWidthUs;
+        int _maxPulseWidthUs;
 };
 
 #endif
