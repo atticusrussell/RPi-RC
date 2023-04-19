@@ -25,7 +25,7 @@ void ServoMotor::write(int angle) {
     if (ServoMotor::_angle < 0) ServoMotor::_angle = 0;
     if (ServoMotor::_angle > 180) ServoMotor::_angle = 180;
 
-    int pulseWidthMin = 500; 
+    int pulseWidthMin = 650; 
     int pulseWidthMax = 2500; 
 
     int pulseWidth = pulseWidthMin + (ServoMotor::_angle * (pulseWidthMax - pulseWidthMin) / 180);
