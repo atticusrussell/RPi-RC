@@ -1,3 +1,20 @@
+#include "esc.hpp"
+
+using namespace std;
+
+// global variable to store a reference to the local ESC instance:
+ESC *escPtr = nullptr;
+
+void handleSignal(int signal) {
+    if (signal == SIGINT && escPtr != nullptr) {
+        std::cout << "Ctrl+C pressed, setting throttle to zero and turning off the ESC" << std::endl;
+        escPtr->setThrottle(0);
+        escPtr->turnOff();
+        gpioTerminate();
+        exit(0);
+    }
+}
+
 int main() {
     if (isPigpiodRunning()) {
         std::cout << "pigpiod daemon is running" << std::endl;
@@ -46,7 +63,7 @@ int main() {
             sleep(2);
         }
 
-    } catch (const std::exception& e) {
+    } catch (const exception& e) {
         cerr <<  "Error initializing MyObject: " << e.what() << endl;
     }
 
