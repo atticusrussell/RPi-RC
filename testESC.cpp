@@ -1,8 +1,14 @@
 // build:
-// g++ -o testESC testESC.cpp esc.cpp -lpigpio -lrt -lpthread
+// g++ -o testESC testESC.cpp esc.cpp angular_servo.cpp -lpigpio -lrt -lpthread
 // run:
 // sudo ./testESC
+
+#include <csignal>
+#include <iostream>
+#include <pigpio.h>
+#include <unistd.h>
 #include "esc.hpp"
+#include "angular_servo.hpp"
 
 using namespace std;
 
