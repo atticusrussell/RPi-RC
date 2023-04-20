@@ -127,14 +127,17 @@ class AngularServo : public Servo{
 
         void setAngle(int angle){
             __angle = angle;
+            // make sure angle is within bounds
             if (__angle < __minAngle){
                 __angle = __minAngle;
             }
             if (__angle > __maxAngle){
                 __angle = __maxAngle;
             }
+            cout << "angle: " << __angle << endl;
+            int pulseWidth = __minPulseWidthUs + (__angle - __minAngle) * (__maxPulseWidthUs - __minPulseWidthUs) / (__maxAngle - __minAngle);
 
-            int pulseWidth = __minPulseWidthUs + (__angle * (__maxPulseWidthUs - __minPulseWidthUs) / (__maxAngle - __minAngle));
+            cout << "pulseWidth: " << pulseWidth << endl;
             setPulseWidth(pulseWidth);
         }
 
@@ -145,8 +148,8 @@ class AngularServo : public Servo{
         }
 
     protected:
-        int __angle;
-        int __minAngle;
+        signed int __angle;
+        signed int __minAngle;
         int __maxAngle;
         int __minPulseWidthUs;
         int __maxPulseWidthUs;
@@ -235,15 +238,16 @@ class ESC : public AngularServo{
 
         }
 
-        // FIXME setThrottle nto working but raw pulsewidth is
+        // FIXME setThrottle not working but raw pulsewidth is
+        // NOTE setThrottleRaw() doesn't work either -fix that
         void calibrate() {
             cout << "Calibrating:" << endl;
             turnOff();
             sleep(1); // time for relay to switch off
             cout << "ESC should start off" << endl;
             cout << "Setting max throttle" << endl;
-            // setThrottle(90);
-            setPulseWidth(2000);
+            setAngle(90);
+            // setPulseWidth(2000);
             turnOn();
             // sleep(1); //time for relay to switch on
             // hold full throttle for two seconds
@@ -252,8 +256,8 @@ class ESC : public AngularServo{
             // sleep(1); // wait a second
             // std::this_thread::sleep_for(std::chrono::seconds(1));
             cout << "Setting neutral throttle" << endl;
-            // setThrottle(0);
-            setPulseWidth(1500);
+            setAngle(0);
+            // setPulseWidth(1500);
             cout << "Should hear long beep" << endl;
             sleep(2); // hold neutral throttle for two seconds
             cout << "ESC should be calibrated" << endl;
@@ -309,16 +313,16 @@ int main() {
         return 1;
     }
 
-    // // test the actual servo
-    // AngularServo rudderServo(18, 0, 180, 650, 2500);
-    // rudderServo.setAngle(90);
-    // sleep(1);
-    // rudderServo.setAngle(0);
-    // sleep(1);
-    // rudderServo.setAngle(180);
-    // sleep(1);
-    // // stop sending any real signal
-    // rudderServo.setPulseWidth(0);
+    // test the actual servo
+    AngularServo rudderServo(18, 0, 180, 650, 2500);
+    rudderServo.setAngle(90);
+    sleep(1);
+    rudderServo.setAngle(0);
+    sleep(1);
+    rudderServo.setAngle(180);
+    sleep(1);
+    // stop sending any real signal
+    rudderServo.setPulseWidth(0);
 
 
     // test the ESC
