@@ -1,10 +1,7 @@
 #include <pigpio.h>
 #include <iostream>
-// #include <cstdlib>
-// #include <functional>
 #include <unistd.h>
 #include "esc.hpp"
-// #include "angular_servo.hpp"
 
 using namespace std;
 
