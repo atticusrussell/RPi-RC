@@ -37,6 +37,9 @@
 #include <cmath>
 #include <chrono>
 #include <thread>
+#include <csignal>
+#include <functional>
+
 using namespace std;
 
 // RPi 4b pins to be plugged in
@@ -56,7 +59,6 @@ constexpr double MIN_REV_THROTTLE = -8.1;
 constexpr int PWM_FREQUENCY = 50;
 constexpr double MIN_PULSE_WIDTH = 1.0 / 1000.0;
 constexpr double MAX_PULSE_WIDTH = 2.0 / 1000.0;
-constexpr int PWM_RANGE = 10000;
 
 // void turnOn();
 // void turnOff();
@@ -240,17 +242,16 @@ class ESC : public AngularServo{
             sleep(1); // time for relay to switch off
             cout << "ESC should start off" << endl;
             cout << "Setting max throttle" << endl;
-            setThrottle(__maxAngle);
-            // sleep(1); // arbitrary time for PWM stuff?
-            sleep(1); //time for relay to switch on
+            setThrottle(90);
             turnOn();
-            // sleep(4); // hold full throttle for two seconds
+            sleep(1); //time for relay to switch on
+            // hold full throttle for two seconds
             std::this_thread::sleep_for(std::chrono::seconds(2));
             cout << "Should hear two beeps" << endl;
             // sleep(1); // wait a second
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            // std::this_thread::sleep_for(std::chrono::seconds(1));
             cout << "Setting neutral throttle" << endl;
-            setThrottle(__neutralThrottle);
+            setThrottle(0);
             cout << "Should hear long beep" << endl;
             sleep(2); // hold neutral throttle for two seconds
             cout << "ESC should be calibrated" << endl;
@@ -284,6 +285,20 @@ class ESC : public AngularServo{
         float __minRevThrottle;
 };
 
+// global variable to store a reference to the local ESC instance:
+ESC *escPtr = nullptr;
+
+void handleSignal(int signal) {
+    if (signal == SIGINT && escPtr != nullptr) {
+        std::cout << "Ctrl+C pressed, setting throttle to zero and turning off the ESC" << std::endl;
+        escPtr->setThrottle(0);
+        escPtr->turnOff();
+        gpioTerminate();
+        exit(0);
+    }
+}
+
+
 
 int main() {
     if (gpioInitialise() < 0) {
@@ -291,14 +306,45 @@ int main() {
         return 1;
     }
 
-    // test the ESC relay
     ESC esc(13, -90, 90, 1000, 2000, 23, 0, 10.1, -8.1);
-    esc.calibrate();
+    // Set the global pointer to the local instance
+    escPtr = &esc;
 
-    sleep(10);
+    // Set the signal handler function for SIGINT (Ctrl+C)
+    struct sigaction sa;
+    sa.sa_handler = handleSignal;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sigaction(SIGINT, &sa, nullptr);
 
+    try {
+        // test the ESC 
+        esc.calibrate();
+
+        sleep(10);
+
+//         double testvector[] = {1.0, 2.0, 3.0, 0.0, -1.0, -2.0, -3.0, 0.0};
+//         for (double i : testvector) {
+//             setThrottle(i);
+//             sleep(2);
+//         }
+
+    } catch (const std::exception& e) {
+        cerr <<  "Error initializing MyObject: " << e.what() << endl;
+    }
+
+    esc.setThrottle(0);
+    esc.turnOff();
+    cout << "Terminating gpio" << endl;
+    gpioTerminate();
+    return 0;
+}
 
     // // test the actual servo
+    // if (gpioInitialise() < 0) {
+    //     std::cerr << "Error initializing pigpio" << std::endl;
+    //     return 1;
+    // }
     // AngularServo rudderServo(18, 0, 180, 650, 2500); 
     // int angle;
 
@@ -313,14 +359,10 @@ int main() {
     //     rudderServo.setAngle(angle);
     //     sleep(1);
     // }
+    // cout << "terminating gpio" << endl;
+    // gpioTerminate();
 
-    esc.setThrottle(0);
-    esc.turnOff();
-
-    cout << "terminating gpio" << endl;
-    gpioTerminate();
-    return 0;
-}
+    
 
 
 
