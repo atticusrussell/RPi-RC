@@ -29,13 +29,13 @@
 //   build with: g++ -o foo_cpp  foo.cpp -lpigpio -lrt -lpthread
 //  * run with : sudo ./foo_cpp
 
-// #include "ServoMotor.h"
 
 #include <iostream>
 #include <pigpio.h>
 #include <unistd.h>
 #include <cmath>
 #include <csignal>
+#include <cstdlib> // Required for system()
 #include <functional>
 
 using namespace std;
@@ -103,14 +103,14 @@ class Servo{
 class AngularServo : public Servo{
     public:
         // constructor
-        AngularServo(int pin, int minAngle, int maxAngle, int minPulseWidthUs, int maxPulseWidthUs) : Servo(pin){
+        AngularServo(int pin, float minAngle, float maxAngle, int minPulseWidthUs, int maxPulseWidthUs) : Servo(pin){
             __minAngle = minAngle;
             __maxAngle = maxAngle;
             __minPulseWidthUs = minPulseWidthUs;
             __maxPulseWidthUs = maxPulseWidthUs;
         }
 
-        void setAngle(int angle){
+        void setAngle(float angle){
             __angle = angle;
             // make sure angle is within bounds
             if (__angle < __minAngle){
@@ -119,23 +119,21 @@ class AngularServo : public Servo{
             if (__angle > __maxAngle){
                 __angle = __maxAngle;
             }
-            cout << "angle: " << __angle << endl;
             int pulseWidth = __minPulseWidthUs + (__angle - __minAngle) * (__maxPulseWidthUs - __minPulseWidthUs) / (__maxAngle - __minAngle);
 
-            cout << "pulseWidth: " << pulseWidth << endl;
             setPulseWidth(pulseWidth);
         }
 
         int getAngle(){
             int pulseWidth = getPulseWidth();
-            int angle = __minAngle + (pulseWidth - __minPulseWidthUs) * (__maxAngle - __minAngle) / (__maxPulseWidthUs - __minPulseWidthUs);
+            float angle = __minAngle + (pulseWidth - __minPulseWidthUs) * (__maxAngle - __minAngle) / (__maxPulseWidthUs - __minPulseWidthUs);
             return angle;
         }
 
     protected:
-        signed int __angle;
-        signed int __minAngle;
-        int __maxAngle;
+        float __angle;
+        float __minAngle;
+        float __maxAngle;
         int __minPulseWidthUs;
         int __maxPulseWidthUs;
 };
@@ -268,6 +266,34 @@ class ESC : public AngularServo{
         float __minRevThrottle;
 };
 
+bool isPigpiodRunning() {
+    int result = system("pgrep pigpiod");
+
+    if (result == 0) {
+        // pigpiod daemon is running
+        return true;
+    } else {
+        // pigpiod daemon is not running
+        return false;
+    }
+}
+
+void killPigpiod() {
+    if (isPigpiodRunning()) {
+        int result = system("sudo killall pigpiod -q");
+
+        if (result == 0) {
+            // Successfully killed the pigpiod daemon
+            std::cout << "pigpiod daemon killed successfully" << std::endl;
+        } else {
+            // An error occurred while trying to kill the pigpiod daemon
+            std::cerr << "Error killing pigpiod daemon. Return code: " << result << std::endl;
+        }
+    } else {
+        std::cout << "pigpiod daemon is not running" << std::endl;
+    }
+}
+
 // global variable to store a reference to the local ESC instance:
 ESC *escPtr = nullptr;
 
@@ -282,9 +308,14 @@ void handleSignal(int signal) {
 }
 
 
-
 int main() {
-    // TODO kill pigpiod if it is running (after getting rest of this working)
+    // // TODO kill pigpiod if it is running (after getting rest of this working)
+    if (isPigpiodRunning()) {
+        std::cout << "pigpiod daemon is running" << std::endl;
+        killPigpiod();
+        sleep(1); // wait a second for pigpiod to die
+    }
+
     if (gpioInitialise() < 0) {
         std::cerr << "Error initializing pigpio" << std::endl;
         return 1;
@@ -318,13 +349,13 @@ int main() {
         // test the ESC 
         esc.calibrate();
 
-        sleep(10);
+        // sleep(10);
 
-//         double testvector[] = {1.0, 2.0, 3.0, 0.0, -1.0, -2.0, -3.0, 0.0};
-//         for (double i : testvector) {
-//             setThrottle(i);
-//             sleep(2);
-//         }
+        double testvector[] = {1.0, 2.0, 3.0, 0.0, -1.0, -2.0, -3.0, 0.0};
+        for (double i : testvector) {
+            esc.setThrottle(i);
+            sleep(2);
+        }
 
     } catch (const std::exception& e) {
         cerr <<  "Error initializing MyObject: " << e.what() << endl;
