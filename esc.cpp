@@ -235,23 +235,25 @@ class ESC : public AngularServo{
 
         }
 
-
+        // FIXME setThrottle nto working but raw pulsewidth is
         void calibrate() {
             cout << "Calibrating:" << endl;
             turnOff();
             sleep(1); // time for relay to switch off
             cout << "ESC should start off" << endl;
             cout << "Setting max throttle" << endl;
-            setThrottle(90);
+            // setThrottle(90);
+            setPulseWidth(2000);
             turnOn();
-            sleep(1); //time for relay to switch on
+            // sleep(1); //time for relay to switch on
             // hold full throttle for two seconds
-            std::this_thread::sleep_for(std::chrono::seconds(2));
+            std::this_thread::sleep_for(std::chrono::seconds(5));
             cout << "Should hear two beeps" << endl;
             // sleep(1); // wait a second
             // std::this_thread::sleep_for(std::chrono::seconds(1));
             cout << "Setting neutral throttle" << endl;
-            setThrottle(0);
+            // setThrottle(0);
+            setPulseWidth(1500);
             cout << "Should hear long beep" << endl;
             sleep(2); // hold neutral throttle for two seconds
             cout << "ESC should be calibrated" << endl;
@@ -301,11 +303,25 @@ void handleSignal(int signal) {
 
 
 int main() {
+    // TODO kill pigpiod if it is running (after getting rest of this working)
     if (gpioInitialise() < 0) {
         std::cerr << "Error initializing pigpio" << std::endl;
         return 1;
     }
 
+    // // test the actual servo
+    // AngularServo rudderServo(18, 0, 180, 650, 2500);
+    // rudderServo.setAngle(90);
+    // sleep(1);
+    // rudderServo.setAngle(0);
+    // sleep(1);
+    // rudderServo.setAngle(180);
+    // sleep(1);
+    // // stop sending any real signal
+    // rudderServo.setPulseWidth(0);
+
+
+    // test the ESC
     ESC esc(13, -90, 90, 1000, 2000, 23, 0, 10.1, -8.1);
     // Set the global pointer to the local instance
     escPtr = &esc;
@@ -340,11 +356,7 @@ int main() {
     return 0;
 }
 
-    // // test the actual servo
-    // if (gpioInitialise() < 0) {
-    //     std::cerr << "Error initializing pigpio" << std::endl;
-    //     return 1;
-    // }
+    // test the actual servo
     // AngularServo rudderServo(18, 0, 180, 650, 2500); 
     // int angle;
 
@@ -359,8 +371,7 @@ int main() {
     //     rudderServo.setAngle(angle);
     //     sleep(1);
     // }
-    // cout << "terminating gpio" << endl;
-    // gpioTerminate();
+   
 
     
 
