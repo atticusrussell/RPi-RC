@@ -2,7 +2,6 @@
 
 #include <pigpio.h>
 #include <iostream>
-#include <cmath>
 #include <csignal>
 #include <cstdlib>
 #include <functional>
