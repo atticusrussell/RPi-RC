@@ -35,8 +35,6 @@
 #include <pigpio.h>
 #include <unistd.h>
 #include <cmath>
-#include <chrono>
-#include <thread>
 #include <csignal>
 #include <functional>
 
@@ -54,19 +52,6 @@ constexpr double FULL_FWD_THROTTLE = 90.0;
 // Minimum throttles that will move the motor when 90 max -90 min
 constexpr double MIN_FWD_THROTTLE = 10.1;
 constexpr double MIN_REV_THROTTLE = -8.1;
-
-// PWM parameters
-constexpr int PWM_FREQUENCY = 50;
-constexpr double MIN_PULSE_WIDTH = 1.0 / 1000.0;
-constexpr double MAX_PULSE_WIDTH = 2.0 / 1000.0;
-
-// void turnOn();
-// void turnOff();
-// void calibrate();
-// void start();
-// double fixThrottle(double throttle);
-// void setThrottle(double throttle);
-// void setThrottleRaw(double throttle);
 
 
 class Servo{
@@ -238,30 +223,22 @@ class ESC : public AngularServo{
 
         }
 
-        // FIXME setThrottle not working but raw pulsewidth is
-        // NOTE setThrottleRaw() doesn't work either -fix that
+
         void calibrate() {
             cout << "Calibrating:" << endl;
-            turnOff();
-            sleep(1); // time for relay to switch off
+            turnOff(); // make sure ESC is off just in case
             cout << "ESC should start off" << endl;
             cout << "Setting max throttle" << endl;
-            setAngle(90);
-            // setPulseWidth(2000);
+            setThrottle(__maxAngle);
             turnOn();
-            // sleep(1); //time for relay to switch on
-            // hold full throttle for two seconds
-            std::this_thread::sleep_for(std::chrono::seconds(5));
+            sleep(2); // hold full throttle for two seconds
             cout << "Should hear two beeps" << endl;
-            // sleep(1); // wait a second
-            // std::this_thread::sleep_for(std::chrono::seconds(1));
+            sleep(1); // wait a second
             cout << "Setting neutral throttle" << endl;
-            setAngle(0);
-            // setPulseWidth(1500);
+            setThrottle(__neutralThrottle);
             cout << "Should hear long beep" << endl;
             sleep(2); // hold neutral throttle for two seconds
             cout << "ESC should be calibrated" << endl;
-
             cout << "Normal startup noises:" << endl;
             cout << "First beeps: 3 for 3 cell battery, 4 for 4 cell" << endl;
             sleep(1);
