@@ -1,11 +1,6 @@
-//   build with: g++ -o foo_cpp  foo.cpp -lpigpio -lrt -lpthread
-//  * run with : sudo ./foo_cpp
-
-
 #include "esc.hpp"
 
 using namespace std;
-
 
 Servo::Servo(int pin) {
     __pin=pin;
@@ -71,7 +66,6 @@ int AngularServo::getAngle(){
     float angle = __minAngle + (pulseWidth - __minPulseWidthUs) * (__maxAngle - __minAngle) / (__maxPulseWidthUs - __minPulseWidthUs);
     return angle;
 }
-
 
 
 ESC::ESC(int pwmPin, int fullRevThrottle, int fullFwdThrottle, int minPulseWidthUs, int maxPulseWidthUs, int powerPin,  int neutralThrottle, float minFwdThrottle, float minRevThrottle) : AngularServo(pwmPin, fullRevThrottle, fullFwdThrottle, minPulseWidthUs, maxPulseWidthUs) {
@@ -188,8 +182,6 @@ void ESC::start() {
     cout << "ESC startup done" << endl;
 }
 
-
-
 bool isPigpiodRunning() {
     int result = system("pgrep pigpiod");
 
@@ -217,8 +209,3 @@ void killPigpiod() {
         std::cout << "pigpiod daemon is not running" << std::endl;
     }
 }
-
-
-
-
-

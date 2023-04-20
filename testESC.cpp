@@ -1,3 +1,7 @@
+// build:
+// g++ -o testESC testESC.cpp esc.cpp -lpigpio -lrt -lpthread
+// run:
+// sudo ./testESC
 #include "esc.hpp"
 
 using namespace std;
