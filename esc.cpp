@@ -35,6 +35,8 @@
 #include <pigpio.h>
 #include <unistd.h>
 #include <cmath>
+#include <chrono>
+#include <thread>
 using namespace std;
 
 // RPi 4b pins to be plugged in
@@ -157,7 +159,28 @@ class ESC : public AngularServo{
             __neutralThrottle = neutralThrottle;
             __minFwdThrottle = minFwdThrottle;
             __minRevThrottle = minRevThrottle;
+            int rc = gpioSetMode(__powerPin, PI_OUTPUT);
+            if ( rc == PI_BAD_GPIO){
+                throw "Invalid GPIO pin Error!";
+            } else if ( rc == PI_BAD_MODE) {
+                throw "Inalid GPIO mode Error!";
+            }
+            // turn off ESC to start
+            rc = gpioWrite(ESC_POWER_PIN, 0);
+            if ( rc == PI_BAD_GPIO){
+                throw "Invalid GPIO pin Error!";
+            } else if ( rc == PI_BAD_LEVEL) {
+                throw "Inalid GPIO level Error!";
+            }
         };
+
+        // // destructor
+        // ~ESC(){
+        //     cout << "ESC destructor called" << endl;
+        //     setThrottle(__neutralThrottle);
+        //     turnOff();
+        //     cout << "ESC destructor finished" << endl;
+        // }
 
         // TODO implement the rest of the methods for ESC
         void turnOn() {
@@ -182,70 +205,77 @@ class ESC : public AngularServo{
             cout << "ESC off" << endl;
         }
 
-        // void calibrate() {
-        //     cout << "Calibrating:" << endl;
-        //     cout << "Setting max throttle" << endl;
-        //     setThrottle(FULL_FWD_THROTTLE);
-        //     turnOn();
-        //     sleep(3);
-        //     cout << "Should hear two beeps" << endl;
-        //     sleep(1);
-        //     cout << "Setting neutral throttle" << endl;
-        //     setThrottle(NEUTRAL_THROTTLE);
-        //     cout << "Should hear long beep" << endl;
-        //     sleep(2);
-        //     cout << "ESC should be calibrated" << endl;
-        //     cout << "Normal startup noises:" << endl;
-        //     cout << "First beeps: 3 for 3 cell battery, 4 for 4 cell" << endl;
-        //     sleep(1);
-        //     cout << "Second beeps: 1 for brake on, 2 for brake off" << endl;
-        //     sleep(1);
-        //     cout << "ESC startup done" << endl;
-        // }
+        void setThrottleRaw(double throttle) {
+            setAngle(throttle);
+            cout << "Throttle: " << throttle << " / ±" << __maxAngle << endl;
+        }
 
-        // void start() {
-        //     cout << "ESC starting up" << endl;
-        //     setThrottle(NEUTRAL_THROTTLE);
-        //     turnOn();
-        //     cout << "Listen to the ESC beeps now" << endl;
-        //     sleep(2);
-        //     cout << "First beeps: 3 for 3 cell battery, 4 for 4 cell" << endl;
-        //     sleep(2);
-        //     cout << "Second beeps: 1 for brake on, 2 for brake off" << endl;
-        //     sleep(2);
-        //     cout << "ESC startup done" << endl;
-        // }
+        double fixThrottle(double throttle) {
+            if (throttle > __neutralThrottle) {
+                throttle += __minFwdThrottle - 1;
+            } else if (throttle < __neutralThrottle) {
+                throttle += __minRevThrottle + 1;
+            }
 
-        // double fixThrottle(double throttle) {
-        //     if (throttle > NEUTRAL_THROTTLE) {
-        //         throttle += MIN_FWD_THROTTLE - 1;
-        //     } else if (throttle < NEUTRAL_THROTTLE) {
-        //         throttle += MIN_REV_THROTTLE + 1;
-        //     }
+            if (throttle > __maxAngle) {
+                throttle = __maxAngle;
+            } else if (throttle < __minAngle) {
+                throttle = __minAngle;
+            }
 
-        //     if (throttle > FULL_FWD_THROTTLE) {
-        //         throttle = FULL_FWD_THROTTLE;
-        //     } else if (throttle < FULL_REV_THROTTLE) {
-        //         throttle = FULL_REV_THROTTLE;
-        //     }
+            return throttle;
+        }
 
-        //     return throttle;
-        // }
+        void setThrottle(double throttle) {
+            throttle = fixThrottle(throttle);
+            setAngle(throttle);
+            cout << "Throttle: " << throttle << " / ±" << __maxAngle << endl;
 
-        // void setThrottle(double throttle) {
-        //     double adjustThrottle = fixThrottle(throttle);
-        //     double pulseWidth = (adjustThrottle - FULL_REV_THROTTLE) * (MAX_PULSE_WIDTH - MIN_PULSE_WIDTH) / (FULL_FWD_THROTTLE - FULL_REV_THROTTLE) + MIN_PULSE_WIDTH;
-        //     int dutyCycle = round(pulseWidth * PWM_RANGE);
-        //     gpioPWM(ESC_PWM_PIN, dutyCycle);
-        //     cout << "Throttle: " << adjustThrottle << " / ±" << FULL_FWD_THROTTLE << endl;
-        // }
+        }
 
-        // void setThrottleRaw(double throttle) {
-        //     double pulseWidth = (throttle - FULL_REV_THROTTLE) * (MAX_PULSE_WIDTH - MIN_PULSE_WIDTH) / (FULL_FWD_THROTTLE - FULL_REV_THROTTLE) + MIN_PULSE_WIDTH;
-        //     int dutyCycle = round(pulseWidth * PWM_RANGE);
-        //     gpioPWM(ESC_PWM_PIN, dutyCycle);
-        //     cout << "Throttle: " << throttle << " / ±" << FULL_FWD_THROTTLE << endl;
-        // }
+
+        void calibrate() {
+            cout << "Calibrating:" << endl;
+            turnOff();
+            sleep(1); // time for relay to switch off
+            cout << "ESC should start off" << endl;
+            cout << "Setting max throttle" << endl;
+            setThrottle(__maxAngle);
+            // sleep(1); // arbitrary time for PWM stuff?
+            sleep(1); //time for relay to switch on
+            turnOn();
+            // sleep(4); // hold full throttle for two seconds
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+            cout << "Should hear two beeps" << endl;
+            // sleep(1); // wait a second
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            cout << "Setting neutral throttle" << endl;
+            setThrottle(__neutralThrottle);
+            cout << "Should hear long beep" << endl;
+            sleep(2); // hold neutral throttle for two seconds
+            cout << "ESC should be calibrated" << endl;
+
+            cout << "Normal startup noises:" << endl;
+            cout << "First beeps: 3 for 3 cell battery, 4 for 4 cell" << endl;
+            sleep(1);
+            cout << "Second beeps: 1 for brake on, 2 for brake off" << endl;
+            sleep(1);
+            cout << "ESC startup done" << endl;
+        }
+
+        void start() {
+            cout << "ESC starting up" << endl;
+            setThrottle(__neutralThrottle);
+            turnOn();
+            cout << "Listen to the ESC beeps now" << endl;
+            sleep(2);
+            cout << "First beeps: 3 for 3 cell battery, 4 for 4 cell" << endl;
+            sleep(2);
+            cout << "Second beeps: 1 for brake on, 2 for brake off" << endl;
+            sleep(2);
+            cout << "ESC startup done" << endl;
+        }
+
 
     protected:
         int __powerPin;
@@ -262,27 +292,32 @@ int main() {
     }
 
     // test the ESC relay
-    ESC motorESC(13, -90, 90, 1000, 2000, 23, 0, 10.1, -8.1);
-    motorESC.turnOn();
+    ESC esc(13, -90, 90, 1000, 2000, 23, 0, 10.1, -8.1);
+    esc.calibrate();
+
     sleep(10);
-    motorESC.turnOff();
 
-    // test the actual servo
-    AngularServo rudderServo(18, 0, 180, 650, 2500); 
-    int angle;
 
-    while (true) {
-        cout << "Enter angle (0-180, -1 to exit): ";
-        cin >> angle;
+    // // test the actual servo
+    // AngularServo rudderServo(18, 0, 180, 650, 2500); 
+    // int angle;
 
-        if (angle == -1) {
-            break;
-        }
+    // while (true) {
+    //     cout << "Enter angle (0-180, -1 to exit): ";
+    //     cin >> angle;
 
-        rudderServo.setAngle(angle);
-        sleep(1);
-    }
+    //     if (angle == -1) {
+    //         break;
+    //     }
 
+    //     rudderServo.setAngle(angle);
+    //     sleep(1);
+    // }
+
+    esc.setThrottle(0);
+    esc.turnOff();
+
+    cout << "terminating gpio" << endl;
     gpioTerminate();
     return 0;
 }
