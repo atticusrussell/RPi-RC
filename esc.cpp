@@ -170,7 +170,6 @@ class ESC : public AngularServo{
         //     cout << "ESC destructor finished" << endl;
         // }
 
-        // TODO implement the rest of the methods for ESC
         void turnOn() {
             cout << "Powering on ESC" << endl;
             int rc = gpioWrite(__powerPin, 1);
@@ -309,7 +308,6 @@ void handleSignal(int signal) {
 
 
 int main() {
-    // // TODO kill pigpiod if it is running (after getting rest of this working)
     if (isPigpiodRunning()) {
         std::cout << "pigpiod daemon is running" << std::endl;
         killPigpiod();
@@ -367,61 +365,3 @@ int main() {
     gpioTerminate();
     return 0;
 }
-
-    // test the actual servo
-    // AngularServo rudderServo(18, 0, 180, 650, 2500); 
-    // int angle;
-
-    // while (true) {
-    //     cout << "Enter angle (0-180, -1 to exit): ";
-    //     cin >> angle;
-
-    //     if (angle == -1) {
-    //         break;
-    //     }
-
-    //     rudderServo.setAngle(angle);
-    //     sleep(1);
-    // }
-   
-
-    
-
-
-
-
-
-// int main() {
-//     if (gpioInitialise() < 0) {
-//         cerr << "Failed to initialize GPIO" << endl;
-//         return 1;
-//     }
-
-//     AngularServo esc(ESC_PWM_PIN, FULL_REV_THROTTLE, FULL_FWD_THROTTLE, 1000, 2000);
-
-
-
-//     gpioSetMode(ESC_POWER_PIN, PI_OUTPUT);
-//     gpioWrite(ESC_POWER_PIN, 0);
-// 	sleep(1); // wait for the relay to turn off - cpp is too fast
-
-//     try {
-//         calibrate();
-
-//         double testvector[] = {1.0, 2.0, 3.0, 0.0, -1.0, -2.0, -3.0, 0.0};
-//         for (double i : testvector) {
-//             setThrottle(i);
-//             sleep(2);
-//         }
-
-//         turnOff();
-//     } catch (...) {
-//         cerr << "Error occurred" << endl;
-//     }
-
-//     setThrottle(0);
-//     turnOff();
-//     gpioTerminate();
-
-//     return 0;
-// }
