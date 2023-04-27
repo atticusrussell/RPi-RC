@@ -23,3 +23,6 @@ class AngularServo : public Servo {
 		int __minPulseWidthUs;
 		int __maxPulseWidthUs;
 };
+
+bool isPigpiodRunning();
+void killPigpiod();
