@@ -1,4 +1,4 @@
-#include <pigpio.h>
+#include <pigpiod_if2.h>
 #include <iostream>
 #include <unistd.h>
 #include "esc.hpp"
@@ -6,19 +6,19 @@
 using namespace std;
 
 
-ESC::ESC(int pwmPin, int fullRevThrottle, int fullFwdThrottle, int minPulseWidthUs, int maxPulseWidthUs, int powerPin,  int neutralThrottle, float minFwdThrottle, float minRevThrottle) : AngularServo(pwmPin, fullRevThrottle, fullFwdThrottle, minPulseWidthUs, maxPulseWidthUs) {
+ESC::ESC(int pi, int pwmPin, int fullRevThrottle, int fullFwdThrottle, int minPulseWidthUs, int maxPulseWidthUs, int powerPin,  int neutralThrottle, float minFwdThrottle, float minRevThrottle) : AngularServo(pi, pwmPin, fullRevThrottle, fullFwdThrottle, minPulseWidthUs, maxPulseWidthUs) {
     __powerPin = powerPin;
     __neutralThrottle = neutralThrottle;
     __minFwdThrottle = minFwdThrottle;
     __minRevThrottle = minRevThrottle;
-    int rc = gpioSetMode(__powerPin, PI_OUTPUT);
+    int rc = set_mode(pi, __powerPin, PI_OUTPUT);
     if ( rc == PI_BAD_GPIO){
         throw "Invalid GPIO pin Error!";
     } else if ( rc == PI_BAD_MODE) {
         throw "Inalid GPIO mode Error!";
     }
     // turn off ESC to start
-    rc = gpioWrite(__powerPin, 0);
+    rc = gpio_write(pi, __powerPin, 0);
     if ( rc == PI_BAD_GPIO){
         throw "Invalid GPIO pin Error!";
     } else if ( rc == PI_BAD_LEVEL) {
@@ -28,7 +28,7 @@ ESC::ESC(int pwmPin, int fullRevThrottle, int fullFwdThrottle, int minPulseWidth
 
 void ESC::turnOn() {
     cout << "Powering on ESC" << endl;
-    int rc = gpioWrite(__powerPin, 1);
+    int rc = gpio_write(__pi, __powerPin, 1);
     if ( rc == PI_BAD_GPIO){
         throw "Invalid GPIO pin Error!";
     } else if ( rc == PI_BAD_LEVEL) {
@@ -39,7 +39,7 @@ void ESC::turnOn() {
 
 void ESC::turnOff() {
     cout << "Powering off ESC" << endl;
-    int rc = gpioWrite(__powerPin, 0);
+    int rc = gpio_write(__pi, __powerPin, 0);
     if ( rc == PI_BAD_GPIO){
         throw "Invalid GPIO pin Error!";
     } else if ( rc == PI_BAD_LEVEL) {

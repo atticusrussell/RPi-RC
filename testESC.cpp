@@ -1,11 +1,11 @@
 // build:
-// g++ -o testESC testESC.cpp esc.cpp angular_servo.cpp -lpigpio -lrt -lpthread
+// g++ -o testESC testESC.cpp esc.cpp angular_servo.cpp -lpigpiod_if2 -lrt -lpthread
 // run:
 // sudo ./testESC
 
 #include <csignal>
 #include <iostream>
-#include <pigpio.h>
+#include <pigpiod_if2.h>
 #include <unistd.h>
 #include "esc.hpp"
 #include "angular_servo.hpp"
@@ -20,25 +20,25 @@ void handleSignal(int signal) {
         std::cout << "Ctrl+C pressed, setting throttle to zero and turning off the ESC" << std::endl;
         escPtr->setThrottle(0);
         escPtr->turnOff();
-        gpioTerminate();
+        pigpio_stop(0); // NOTE should be actual pi number
         exit(0);
     }
 }
 
 int main() {
-    if (isPigpiodRunning()) {
-        std::cout << "pigpiod daemon is running" << std::endl;
-        killPigpiod();
-        sleep(1); // wait a second for pigpiod to die
+    if (!isPigpiodRunning()) {
+        startPigpiod();
     }
 
-    if (gpioInitialise() < 0) {
-        std::cerr << "Error initializing pigpio" << std::endl;
+
+    int pi = pigpio_start(nullptr, nullptr);
+    if (pi < 0) {
+        cerr << "Error initializing pigpio" << endl;
         return 1;
     }
 
     // test the actual servo
-    AngularServo rudderServo(18, 0, 180, 650, 2500);
+    AngularServo rudderServo(pi, 18, 0, 180, 650, 2500);
     rudderServo.setAngle(90);
     sleep(1);
     rudderServo.setAngle(0);
@@ -50,7 +50,7 @@ int main() {
 
 
     // test the ESC
-    ESC esc(13, -90, 90, 1000, 2000, 23, 0, 10.1, -8.1);
+    ESC esc(pi, 13, -90, 90, 1000, 2000, 23, 0, 10.1, -8.1);
     // Set the global pointer to the local instance
     escPtr = &esc;
 
@@ -80,6 +80,6 @@ int main() {
     esc.setThrottle(0);
     esc.turnOff();
     cout << "Terminating gpio" << endl;
-    gpioTerminate();
+    pigpio_stop(pi);
     return 0;
 }

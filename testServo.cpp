@@ -56,6 +56,6 @@ int main() {
     }
     
     cout << "Terminating gpio" << endl;
-    pigpio_stop(0);
+    pigpio_stop(pi);
     return 0;
 }
