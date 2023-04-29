@@ -1,11 +1,11 @@
 // build:
-// g++ -o testServo testServo.cpp angular_servo.cpp -lpigpio -lrt -lpthread
+// g++ -o testServo testServo.cpp angular_servo.cpp -lpigpiod_if2 -lrt -lpthread
 // run:
 // sudo ./testESC
 
 #include <csignal>
 #include <iostream>
-#include <pigpio.h>
+#include <pigpiod_if2.h>
 #include <unistd.h>
 #include "angular_servo.hpp"
 
@@ -14,27 +14,27 @@ using namespace std;
 
 void handleSignal(int signal) {
     if (signal == SIGINT ) {
-        std::cout << "Ctrl+C pressed, setting throttle to zero and turning off the Servo" << std::endl;
-        gpioTerminate();
+        cout << "Ctrl+C pressed, setting angle to zero and turning off the Servo" << endl;
+        pigpio_stop(0); // NOTE should be actual pi number
         exit(0);
     }
 }
 
 int main() {
-    if (isPigpiodRunning()) {
-        std::cout << "pigpiod daemon is running" << std::endl;
-        killPigpiod();
-        sleep(1); // wait a second for pigpiod to die
+    if (!isPigpiodRunning()) {
+        startPigpiod();
     }
 
-    if (gpioInitialise() < 0) {
-        std::cerr << "Error initializing pigpio" << std::endl;
+
+    int pi = pigpio_start(nullptr, nullptr);
+    if (pi < 0) {
+        cerr << "Error initializing pigpio" << endl;
         return 1;
     }
 
     // test the actual servo
     try {
-        AngularServo rudderServo(18, 0, 180, 650, 2500);
+        AngularServo rudderServo(pi, 18, 0, 180, 650, 2500);
     rudderServo.setAngle(90);
     sleep(1);
     rudderServo.setAngle(0);
@@ -56,6 +56,6 @@ int main() {
     }
     
     cout << "Terminating gpio" << endl;
-    gpioTerminate();
+    pigpio_stop(0);
     return 0;
 }

@@ -1,51 +1,44 @@
-#include <pigpio.h>
 #include <iostream>
 #include <csignal>
 #include <cstdlib>
 #include <functional>
+#include <pigpiod_if2.h>
 #include "angular_servo.hpp"
 
 using namespace std;
 
-Servo::Servo(int pin) {
-    __pin=pin;
+Servo::Servo(int pi, int pin) {
+    __pi = pi;
+    __pin = pin;
     int rc;
-    rc = gpioSetMode(__pin, PI_OUTPUT);
-    if ( rc == PI_BAD_GPIO){
-        throw "Invalid GPIO pin Error!";
-    } else if ( rc == PI_BAD_MODE) {
-        throw "Inalid GPIO mode Error!";
+    rc = set_mode(__pi, __pin, PI_OUTPUT);
+    if (rc < 0){
+        throw "Invalid GPIO pin or mode Error!";
     }
     
     // initializing to zero with pigpio is no input
-    rc = gpioServo(__pin, 0);
-    if (rc == PI_BAD_USER_GPIO) {
-        throw "Invalid user GPIO pin Error!";
-    } else if (rc == PI_BAD_PULSEWIDTH) {
-        throw "Invalid pulsewidth Error!";
+    rc = set_servo_pulsewidth(__pi, __pin, 0);
+    if (rc < 0) {
+        throw "Invalid user GPIO pin or pulsewidth Error!";
     }
 }
 
 int Servo::getPulseWidth() {
-    int rc = gpioGetServoPulsewidth(__pin);
-    if (rc == PI_BAD_USER_GPIO) {
+    int rc = get_servo_pulsewidth(__pi, __pin);
+    if (rc < 0) {
         throw "Invalid user GPIO pin Error!";
-    } else if (rc == PI_NOT_SERVO_GPIO) {
-        throw "Invalid servo GPIO Error!";
     }
     return rc;
 }
 
 void Servo::setPulseWidth(int pulseWidth){
-    int rc = gpioServo(__pin, pulseWidth);
-    if (rc == PI_BAD_USER_GPIO) {
-        throw "Invalid user GPIO pin Error!";
-    } else if (rc == PI_BAD_PULSEWIDTH) {
-        throw "Invalid pulsewidth Error!";
+    int rc = set_servo_pulsewidth(__pi, __pin, pulseWidth);
+    if (rc < 0) {
+        throw "Invalid user GPIO pin or pulsewidth Error!";
     }
 }
 
-AngularServo::AngularServo(int pin, float minAngle, float maxAngle, int minPulseWidthUs, int maxPulseWidthUs) : Servo(pin) {
+AngularServo::AngularServo(int pi, int pin, float minAngle, float maxAngle, int minPulseWidthUs, int maxPulseWidthUs) : Servo(pi, pin) {
             __minAngle = minAngle;
             __maxAngle = maxAngle;
             __minPulseWidthUs = minPulseWidthUs;
@@ -90,12 +83,30 @@ void killPigpiod() {
 
         if (result == 0) {
             // Successfully killed the pigpiod daemon
-            std::cout << "pigpiod daemon killed successfully" << std::endl;
+            cout << "pigpiod daemon killed successfully" << endl;
         } else {
             // An error occurred while trying to kill the pigpiod daemon
-            std::cerr << "Error killing pigpiod daemon. Return code: " << result << std::endl;
+            cerr << "Error killing pigpiod daemon. Return code: " << result << endl;
         }
     } else {
-        std::cout << "pigpiod daemon is not running" << std::endl;
+        cout << "pigpiod daemon is not running" << endl;
+    }
+}
+
+void startPigpiod() {
+    if (!isPigpiodRunning()) {
+        cout << "pigpio daemon not running. attempting to start it." << endl;
+        system("sudo systemctl start pigpiod");
+        sleep(1);
+
+        if (isPigpiodRunning()) {
+            // Successfully started the pigpiod daemon
+            cout << "pigpiod daemon started successfully" << endl;
+        } else {
+            // An error occurred while trying to start the pigpiod daemon
+            cerr << "Error starting pigpiod daemon." << endl; 
+        }
+    } else {
+        cout << "pigpiod daemon is already running" << endl;
     }
 }
