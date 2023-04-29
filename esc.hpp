@@ -4,7 +4,7 @@
 
 class ESC : public AngularServo {
 	public:
-		ESC(int pwmPin, int fullRevThrottle, int fullFwdThrottle, int minPulseWidthUs, int maxPulseWidthUs, int powerPin, int neutralThrottle, float minFwdThrottle, float minRevThrottle);
+		ESC(int pi, int pwmPin, int fullRevThrottle, int fullFwdThrottle, int minPulseWidthUs, int maxPulseWidthUs, int powerPin, int neutralThrottle, float minFwdThrottle, float minRevThrottle);
 		void turnOn();
 		void turnOff();
 		void setThrottleRaw(double throttle);
